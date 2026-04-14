@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --bg-base: #f8fbff;
+    --bg-elevated: rgba(255, 255, 255, 0.74);
+    --text-primary: #0e1828;
+    --text-muted: #526176;
+    --ring-accent: #0ea5a4;
+    --surface-border: rgba(20, 85, 120, 0.15);
+    --shadow-soft: 0 20px 55px rgba(7, 22, 45, 0.1);
+  }
+
+  .dark {
+    --bg-base: #06101b;
+    --bg-elevated: rgba(7, 20, 34, 0.68);
+    --text-primary: #e7eef8;
+    --text-muted: #9db0c8;
+    --ring-accent: #2dd4bf;
+    --surface-border: rgba(69, 122, 164, 0.24);
+    --shadow-soft: 0 20px 55px rgba(2, 8, 17, 0.48);
+  }
+
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    display: none;
+  }
+}
+
+@layer base {
+  ::selection {
+    background: rgba(20, 184, 166, 0.25);
+    color: var(--text-primary);
+  }
+}
+
+@layer utilities {
+  .app-shell {
+    @apply relative overflow-hidden;
+  }
+
+  .surface {
+    background: var(--bg-elevated);
+    border: 1px solid var(--surface-border);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .surface-strong {
+    background: color-mix(in oklab, var(--bg-elevated), white 12%);
+    border: 1px solid color-mix(in oklab, var(--surface-border), white 10%);
+    box-shadow: 0 25px 65px rgba(5, 26, 52, 0.16);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .text-muted {
+    color: var(--text-muted);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-2xl px-5 py-2.5 font-semibold text-white;
+    background: linear-gradient(135deg, #0891b2, #0ea5a4 48%, #f97316);
+    box-shadow: 0 12px 28px rgba(8, 145, 178, 0.35);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.05);
+  }
+
+  .float-orb {
+    @apply pointer-events-none absolute rounded-full blur-3xl;
+    animation: drift 9s ease-in-out infinite;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    overflow-wrap: anywhere;
+  }
+
+  .animate-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .stagger-rise {
+    animation: staggerRise 0.7s ease both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes staggerRise {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(0, -16px, 0) scale(1.04);
+    }
+  }
+
+  .shadow-glass {
+    @apply shadow-lg backdrop-blur-sm;
+  }
+
+  .glass-effect {
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-md;
+  }
+}
+
+/* Smooth animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#7dd3fc, #0ea5a4);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(#38bdf8, #0f766e);
+}
+
+.dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(#155e75, #115e59);
+}
+
+.dark::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(#0e7490, #0f766e);
+}

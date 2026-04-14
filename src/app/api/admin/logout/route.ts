@@ -1,0 +1,15 @@
+import { NextResponse } from 'next/server';
+import { ADMIN_COOKIE_NAME_VALUE } from '@/lib/admin-auth';
+
+export async function POST() {
+  const response = NextResponse.json({ message: 'Logged out' });
+  response.cookies.set(ADMIN_COOKIE_NAME_VALUE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    expires: new Date(0),
+  });
+
+  return response;
+}
