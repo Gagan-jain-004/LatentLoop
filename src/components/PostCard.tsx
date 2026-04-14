@@ -229,8 +229,6 @@ export default function PostCard({ post, onVote }: PostCardProps) {
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/post/${post._id}`;
     const shareData = {
-      title: 'RTU Got Latent',
-      text: post.content.length > 120 ? `${post.content.slice(0, 120)}...` : post.content,
       url: shareUrl,
     };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Header, Feed, FeedbackModal, Footer } from '@/components';
 
 type CreatedPost = {
@@ -21,6 +21,22 @@ export default function Home() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [optimisticPost, setOptimisticPost] = useState<CreatedPost | null>(null);
+
+  useEffect(() => {
+    const handlePageShow = () => {
+      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      if (navEntry?.type === 'back_forward') {
+        setCurrentFilter('latest');
+        setOptimisticPost(null);
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, []);
 
   const handlePostCreated = useCallback((post: CreatedPost) => {
     setCurrentFilter('latest');
