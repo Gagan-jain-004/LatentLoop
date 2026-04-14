@@ -49,7 +49,7 @@ export default function PostPage() {
 
   return (
     <main className="app-shell min-h-screen">
-      <Header />
+      <Header onFilterChange={() => {}} onPostCreated={() => {}} />
 
       <section className="mx-auto w-full max-w-5xl px-4 pb-10 pt-6 md:pt-8">
         {isLoading ? (
