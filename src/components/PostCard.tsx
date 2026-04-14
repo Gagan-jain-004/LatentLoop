@@ -36,6 +36,7 @@ export default function PostCard({ post, onVote }: PostCardProps) {
   const [downvotes, setDownvotes] = useState(post.downvotes);
   const [isVoting, setIsVoting] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -59,6 +60,26 @@ export default function PostCard({ post, onVote }: PostCardProps) {
       setHasReported(true);
     }
   }, [post._id]);
+
+  useEffect(() => {
+    if (!isImageOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsImageOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isImageOpen]);
 
   useEffect(() => {
     if (!isCommentsOpen) {
@@ -256,9 +277,51 @@ export default function PostCard({ post, onVote }: PostCardProps) {
 
       {post.imageUrl && (
         <div className="mb-4 overflow-hidden rounded-2xl border border-sky-200/70 dark:border-slate-700">
-          <img src={post.imageUrl} alt="Post attachment" className="max-h-[460px] w-full object-cover" />
+          <button
+            type="button"
+            onClick={() => setIsImageOpen(true)}
+            className="block w-full cursor-zoom-in text-left"
+            aria-label="Open image in full view"
+          >
+            <img src={post.imageUrl} alt="Post attachment" className="max-h-115 w-full object-cover" />
+          </button>
         </div>
       )}
+
+      <AnimatePresence>
+        {isImageOpen && post.imageUrl && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsImageOpen(false)}
+          >
+            <motion.div
+              className="relative flex h-full w-full max-w-6xl items-center justify-center"
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setIsImageOpen(false)}
+                className="absolute right-0 top-0 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur hover:bg-white/20"
+                aria-label="Close image viewer"
+              >
+                Close
+              </button>
+
+              <img
+                src={post.imageUrl}
+                alt="Post attachment enlarged"
+                className="max-h-[calc(100vh-2rem)] max-w-full rounded-2xl object-contain shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>{getRelativeTime(new Date(post.createdAt))}</span>
