@@ -35,7 +35,7 @@ function HomeContent() {
 
   const currentFilter = useMemo(() => {
     const filterFromUrl = searchParams.get('filter');
-    if (filterFromUrl === 'trending' || filterFromUrl === 'top') {
+    if (filterFromUrl === 'trending') {
       return filterFromUrl;
     }
 

@@ -202,7 +202,7 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
           ref={textareaRef}
           value={content}
           onChange={(e) => handleContentChange(e.target.value)}
-          placeholder="Drop a confession, idea, rant, or hot take..."
+          placeholder="Post anonymously: share a confession, idea, rant, or hot take..."
           className={`w-full resize-none rounded-2xl border border-sky-200 bg-white/80 p-4 md:pr-16 text-sm text-slate-900 placeholder:font-medium placeholder:text-slate-500 placeholder:opacity-100 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/35 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:placeholder:text-slate-300 ${compact ? 'h-20' : 'h-24'}`}
           disabled={isLoading}
         />

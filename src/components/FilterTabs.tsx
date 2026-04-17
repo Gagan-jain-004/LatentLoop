@@ -11,7 +11,6 @@ interface FilterTabsProps {
 const filters = [
   { id: 'latest', label: 'All Posts', icon: '🕐' },
   { id: 'trending', label: 'Trending', icon: '🔥' },
-  { id: 'top', label: 'Top Score', icon: '⬆️' },
 ];
 
 export default function FilterTabs({ onFilterChange, activeFilter: activeFilterProp }: FilterTabsProps) {
