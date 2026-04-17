@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { getRelativeTime } from '@/utils/validation';
+import { linkifyText } from '@/utils/linkify';
 import EmojiStickerPicker from './EmojiStickerPicker';
 
 interface Post {
@@ -341,7 +342,7 @@ export default function PostCard({ post, onVote }: PostCardProps) {
       whileHover={{ y: -2 }}
     >
       <div className="mb-3">
-        <p className="whitespace-pre-wrap wrap-anywhere text-base leading-relaxed text-slate-800 dark:text-slate-100">{post.content}</p>
+        <p className="whitespace-pre-wrap wrap-anywhere text-base leading-relaxed text-slate-800 dark:text-slate-100">{linkifyText(post.content)}</p>
       </div>
 
       {post.imageUrl && (
@@ -607,7 +608,7 @@ export default function PostCard({ post, onVote }: PostCardProps) {
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <p className="whitespace-pre-wrap wrap-anywhere text-sm leading-6 text-slate-800 dark:text-slate-100">
-                      {comment.content}
+                      {linkifyText(comment.content)}
                     </p>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                       {getRelativeTime(new Date(comment.createdAt))}

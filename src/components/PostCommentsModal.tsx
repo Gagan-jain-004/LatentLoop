@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { getRelativeTime } from '@/utils/validation';
+import { linkifyText } from '@/utils/linkify';
 import EmojiStickerPicker from './EmojiStickerPicker';
 
 interface CommentItem {
@@ -171,7 +172,7 @@ export default function PostCommentsModal({ postId, isOpen, onClose }: PostComme
                             animate={{ opacity: 1, y: 0 }}
                           >
                             <p className="whitespace-pre-wrap wrap-anywhere text-sm leading-6 text-gray-900 dark:text-gray-100">
-                              {comment.content}
+                              {linkifyText(comment.content)}
                             </p>
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                               {getRelativeTime(new Date(comment.createdAt))}
