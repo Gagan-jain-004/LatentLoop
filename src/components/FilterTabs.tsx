@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 interface FilterTabsProps {
   onFilterChange: (filter: string) => void;
+  activeFilter?: string;
 }
 
 const filters = [
@@ -13,11 +14,14 @@ const filters = [
   { id: 'top', label: 'Top Score', icon: '⬆️' },
 ];
 
-export default function FilterTabs({ onFilterChange }: FilterTabsProps) {
-  const [activeFilter, setActiveFilter] = useState('latest');
+export default function FilterTabs({ onFilterChange, activeFilter: activeFilterProp }: FilterTabsProps) {
+  const [internalActiveFilter, setInternalActiveFilter] = useState('latest');
+  const activeFilter = activeFilterProp ?? internalActiveFilter;
 
   const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
+    if (activeFilterProp === undefined) {
+      setInternalActiveFilter(filter);
+    }
     onFilterChange(filter);
   };
 

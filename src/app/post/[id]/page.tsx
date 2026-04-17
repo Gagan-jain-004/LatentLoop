@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Header, Footer, FeedbackModal } from '@/components';
@@ -12,6 +12,15 @@ interface Post {
   _id: string;
   content: string;
   imageUrl?: string;
+  poll?: {
+    question: string;
+    options: {
+      id: string;
+      text: string;
+      votes: number;
+    }[];
+    totalVotes: number;
+  };
   upvotes: number;
   downvotes: number;
   reports: number;
@@ -23,10 +32,23 @@ interface Post {
 
 export default function PostPage() {
   const params = useParams();
+  const router = useRouter();
   const postId = params.id as string;
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (navEntry?.type === 'reload') {
+      router.replace('/');
+    }
+  }, [router]);
+
+  const handleFilterChange = (filter: string) => {
+    const targetUrl = filter === 'latest' ? '/' : `/?filter=${filter}`;
+    router.push(targetUrl);
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -49,7 +71,7 @@ export default function PostPage() {
 
   return (
     <main className="app-shell min-h-screen">
-      <Header onFilterChange={() => {}} onPostCreated={() => {}} />
+      <Header onFilterChange={handleFilterChange} activeFilter="latest" onPostCreated={() => {}} />
 
       <section className="mx-auto w-full max-w-5xl px-4 pb-10 pt-6 md:pt-8">
         {isLoading ? (

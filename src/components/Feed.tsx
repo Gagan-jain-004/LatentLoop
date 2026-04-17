@@ -10,6 +10,15 @@ interface Post {
   _id: string;
   content: string;
   imageUrl?: string;
+  poll?: {
+    question: string;
+    options: {
+      id: string;
+      text: string;
+      votes: number;
+    }[];
+    totalVotes: number;
+  };
   upvotes: number;
   downvotes: number;
   reports: number;

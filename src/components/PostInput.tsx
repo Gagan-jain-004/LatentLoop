@@ -12,6 +12,15 @@ interface PostInputProps {
     content: string;
     imageUrl?: string;
     imagePublicId?: string;
+    poll?: {
+      question: string;
+      options: {
+        id: string;
+        text: string;
+        votes: number;
+      }[];
+      totalVotes: number;
+    };
     upvotes: number;
     downvotes: number;
     reports: number;
@@ -29,6 +38,9 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
   const [isEmojiKitOpen, setIsEmojiKitOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isPollEnabled, setIsPollEnabled] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -74,9 +86,43 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!content.trim()) {
-      toast.error('Please write something!');
+    const hasImage = Boolean(selectedImage);
+    const hasPoll = isPollEnabled;
+
+    if (!content.trim() && !hasImage && !hasPoll) {
+      toast.error('Add text, image, or poll to post');
       return;
+    }
+
+    if (isPollEnabled) {
+      const trimmedQuestion = pollQuestion.trim();
+      const normalizedOptions = pollOptions.map((option) => option.trim()).filter(Boolean);
+
+      if (!trimmedQuestion) {
+        toast.error('Please add a poll question');
+        return;
+      }
+
+      if (trimmedQuestion.length > 120) {
+        toast.error('Poll question must be 120 characters or less');
+        return;
+      }
+
+      if (normalizedOptions.length < 2 || normalizedOptions.length > 4) {
+        toast.error('Poll needs 2 to 4 options');
+        return;
+      }
+
+      if (normalizedOptions.some((option) => option.length > 80)) {
+        toast.error('Each poll option must be 80 characters or less');
+        return;
+      }
+
+      const hasDuplicates = new Set(normalizedOptions.map((option) => option.toLowerCase())).size !== normalizedOptions.length;
+      if (hasDuplicates) {
+        toast.error('Poll options must be unique');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -90,6 +136,17 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
         formData.append('image', selectedImage);
       }
 
+      if (isPollEnabled) {
+        const normalizedOptions = pollOptions.map((option) => option.trim()).filter(Boolean);
+        formData.append(
+          'poll',
+          JSON.stringify({
+            question: pollQuestion.trim(),
+            options: normalizedOptions,
+          })
+        );
+      }
+
       const response = await axios.post('/api/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -101,6 +158,9 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
       setCharacterCount(0);
       setSelectedImage(null);
       setImagePreview(null);
+      setIsPollEnabled(false);
+      setPollQuestion('');
+      setPollOptions(['', '']);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -213,6 +273,73 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
         </div>
       )}
 
+      {isPollEnabled && (
+        <div className="mb-4 rounded-2xl border border-sky-200 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={pollQuestion}
+              onChange={(event) => setPollQuestion(event.target.value.slice(0, 120))}
+              placeholder="Poll question"
+              className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              disabled={isLoading}
+            />
+
+            <div className="space-y-2">
+              {pollOptions.map((option, index) => (
+                <div key={`poll-option-${index}`} className="flex items-center gap-2">
+                  <span className="w-5 text-xs font-semibold text-slate-500 dark:text-slate-400">{index + 1}.</span>
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(event) => {
+                      const next = [...pollOptions];
+                      next[index] = event.target.value.slice(0, 80);
+                      setPollOptions(next);
+                    }}
+                    placeholder={`Option ${index + 1}`}
+                    className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    disabled={isLoading}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (pollOptions.length >= 4) {
+                    return;
+                  }
+
+                  setPollOptions((current) => [...current, '']);
+                }}
+                className="rounded-xl border border-sky-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                disabled={isLoading || pollOptions.length >= 4}
+              >
+                + Add option
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (pollOptions.length <= 2) {
+                    return;
+                  }
+
+                  setPollOptions((current) => current.slice(0, -1));
+                }}
+                className="rounded-xl border border-sky-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                disabled={isLoading || pollOptions.length <= 2}
+              >
+                - Remove option
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3">
         <motion.span
           className={`text-sm font-semibold ${compact ? 'hidden sm:inline' : ''} ${
@@ -237,9 +364,28 @@ export default function PostInput({ onPostCreated, compact = false }: PostInputP
             🖼️ Image
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setIsPollEnabled((current) => !current);
+              if (isPollEnabled) {
+                setPollQuestion('');
+                setPollOptions(['', '']);
+              }
+            }}
+            className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold transition-all ${
+              isPollEnabled
+                ? 'border-cyan-500 bg-cyan-50 text-cyan-800 dark:border-cyan-500 dark:bg-cyan-900/20 dark:text-cyan-200'
+                : 'border-sky-200 bg-white/70 text-slate-700 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800'
+            }`}
+            disabled={isLoading}
+          >
+            📊 Poll
+          </button>
+
           <motion.button
             type="submit"
-            disabled={isLoading || !content.trim()}
+            disabled={isLoading || (!content.trim() && !selectedImage && !isPollEnabled)}
             className={`btn-primary disabled:cursor-not-allowed disabled:opacity-50 ${compact ? 'px-4 py-2 text-sm' : ''}`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

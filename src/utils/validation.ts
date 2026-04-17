@@ -9,13 +9,21 @@ export function sanitizeInput(input: string, maxLength: number = 500): string {
     .slice(0, maxLength);
 }
 
-export function validatePostContent(content: string): { valid: boolean; error?: string } {
-  if (!content || typeof content !== 'string') {
+export function validatePostContent(content: string, allowEmpty: boolean = false): { valid: boolean; error?: string } {
+  if ((content === undefined || content === null || typeof content !== 'string') && !allowEmpty) {
     return { valid: false, error: 'Content is required' };
+  }
+
+  if (typeof content !== 'string') {
+    return { valid: false, error: 'Invalid content format' };
   }
 
   const trimmed = content.trim();
   if (trimmed.length === 0) {
+    if (allowEmpty) {
+      return { valid: true };
+    }
+
     return { valid: false, error: 'Content cannot be empty' };
   }
 

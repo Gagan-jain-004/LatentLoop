@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     const content = String(formData.get('content') || '');
     const captchaToken = String(formData.get('captchaToken') || '');
     const imageFile = formData.get('image');
+    const pollRaw = String(formData.get('poll') || '');
     const ip = getClientIP(request);
     const limiterKey = buildRateLimitKey('post-create', ip);
 
@@ -40,13 +41,89 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'CAPTCHA verification failed' }, { status: 400 });
     }
 
-    // Validate content
-    const validation = validatePostContent(content);
+    const hasImage = imageFile instanceof File && imageFile.size > 0;
+    const hasPoll = Boolean(pollRaw.trim());
+
+    if (!content.trim() && !hasImage && !hasPoll) {
+      return NextResponse.json(
+        { error: 'Please add text, image, or a poll before posting' },
+        { status: 400 }
+      );
+    }
+
+    // Validate content. Empty text is allowed when image or poll is present.
+    const validation = validatePostContent(content, hasImage || hasPoll);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     const sanitized = sanitizeInput(content);
+
+    let poll:
+      | {
+          question: string;
+          options: { id: string; text: string; votes: number }[];
+          totalVotes: number;
+        }
+      | undefined;
+
+    if (pollRaw) {
+      let parsedPoll: unknown;
+      try {
+        parsedPoll = JSON.parse(pollRaw);
+      } catch {
+        return NextResponse.json({ error: 'Invalid poll format' }, { status: 400 });
+      }
+
+      const pollQuestion =
+        typeof parsedPoll === 'object' && parsedPoll !== null && 'question' in parsedPoll
+          ? String((parsedPoll as { question?: unknown }).question || '').trim()
+          : '';
+
+      const pollOptionsRaw =
+        typeof parsedPoll === 'object' && parsedPoll !== null && 'options' in parsedPoll
+          ? (parsedPoll as { options?: unknown }).options
+          : [];
+
+      if (!pollQuestion) {
+        return NextResponse.json({ error: 'Poll question is required' }, { status: 400 });
+      }
+
+      if (pollQuestion.length > 120) {
+        return NextResponse.json({ error: 'Poll question must be 120 characters or less' }, { status: 400 });
+      }
+
+      if (!Array.isArray(pollOptionsRaw)) {
+        return NextResponse.json({ error: 'Poll options are required' }, { status: 400 });
+      }
+
+      const normalizedOptions = pollOptionsRaw
+        .map((option) => (typeof option === 'string' ? option.trim() : ''))
+        .filter(Boolean);
+
+      if (normalizedOptions.length < 2 || normalizedOptions.length > 4) {
+        return NextResponse.json({ error: 'Poll must have between 2 and 4 options' }, { status: 400 });
+      }
+
+      if (normalizedOptions.some((option) => option.length > 80)) {
+        return NextResponse.json({ error: 'Each poll option must be 80 characters or less' }, { status: 400 });
+      }
+
+      const uniqueOptionCount = new Set(normalizedOptions.map((option) => option.toLowerCase())).size;
+      if (uniqueOptionCount !== normalizedOptions.length) {
+        return NextResponse.json({ error: 'Poll options must be unique' }, { status: 400 });
+      }
+
+      poll = {
+        question: sanitizeInput(pollQuestion, 120),
+        options: normalizedOptions.map((option, index) => ({
+          id: `option-${index + 1}`,
+          text: sanitizeInput(option, 80),
+          votes: 0,
+        })),
+        totalVotes: 0,
+      };
+    }
 
     let imageUrl: string | undefined;
     let imagePublicId: string | undefined;
@@ -84,6 +161,7 @@ export async function POST(request: NextRequest) {
       content: sanitized,
       imageUrl,
       imagePublicId,
+      poll,
       expiresAt: calculateExpiryDate(),
       score: 0,
     });

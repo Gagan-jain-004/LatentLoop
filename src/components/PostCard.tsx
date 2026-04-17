@@ -11,6 +11,15 @@ interface Post {
   _id: string;
   content: string;
   imageUrl?: string;
+  poll?: {
+    question: string;
+    options: {
+      id: string;
+      text: string;
+      votes: number;
+    }[];
+    totalVotes: number;
+  };
   upvotes: number;
   downvotes: number;
   reports: number;
@@ -48,6 +57,10 @@ export default function PostCard({ post, onVote }: PostCardProps) {
   const [hasVoted, setHasVoted] = useState<'up' | 'down' | null>(null);
   const [hasReported, setHasReported] = useState(false);
   const [commentCount, setCommentCount] = useState(post.commentCount || 0);
+  const [poll, setPoll] = useState(post.poll || null);
+  const [isPollVoting, setIsPollVoting] = useState(false);
+  const [hasPollVoted, setHasPollVoted] = useState(false);
+  const [selectedPollOptionId, setSelectedPollOptionId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -59,7 +72,17 @@ export default function PostCard({ post, onVote }: PostCardProps) {
     if (storedReport === '1') {
       setHasReported(true);
     }
+
+    const storedPollVote = localStorage.getItem(`poll-vote:${post._id}`);
+    if (storedPollVote) {
+      setHasPollVoted(true);
+      setSelectedPollOptionId(storedPollVote);
+    }
   }, [post._id]);
+
+  useEffect(() => {
+    setPoll(post.poll || null);
+  }, [post.poll]);
 
   useEffect(() => {
     if (!isImageOpen) {
@@ -253,6 +276,40 @@ export default function PostCard({ post, onVote }: PostCardProps) {
     }
   };
 
+  const handlePollVote = async (optionId: string) => {
+    if (!poll) {
+      return;
+    }
+
+    if (hasPollVoted) {
+      toast.error('You already voted on this poll');
+      return;
+    }
+
+    setIsPollVoting(true);
+    try {
+      const response = await axios.post('/api/posts/poll-vote', {
+        postId: post._id,
+        optionId,
+      });
+
+      setPoll(response.data.poll);
+      setHasPollVoted(true);
+      setSelectedPollOptionId(optionId);
+      localStorage.setItem(`poll-vote:${post._id}`, optionId);
+      toast.success('Poll vote submitted');
+    } catch (error: unknown) {
+      console.error('Error voting on poll:', error);
+      if (axios.isAxiosError<{ error?: string }>(error)) {
+        toast.error(error.response?.data?.error || 'Failed to vote on poll');
+      } else {
+        toast.error('Failed to vote on poll');
+      }
+    } finally {
+      setIsPollVoting(false);
+    }
+  };
+
   if (post.hidden) {
     return (
       <div className="surface rounded-2xl p-5 text-center text-slate-600 dark:text-slate-300">
@@ -320,6 +377,45 @@ export default function PostCard({ post, onVote }: PostCardProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {poll && poll.options.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-sky-200/70 bg-white/60 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+          <p className="mb-3 text-sm font-bold text-slate-800 dark:text-slate-100">📊 {poll.question}</p>
+
+          <div className="space-y-2">
+            {poll.options.map((option) => {
+              const totalVotes = poll.totalVotes || 0;
+              const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
+              const isSelected = selectedPollOptionId === option.id;
+
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => handlePollVote(option.id)}
+                  disabled={isPollVoting || hasPollVoted}
+                  className={`relative w-full overflow-hidden rounded-xl border px-3 py-2 text-left text-sm transition-all disabled:cursor-not-allowed disabled:opacity-80 ${
+                    isSelected
+                      ? 'border-cyan-500 text-cyan-900 dark:text-cyan-100'
+                      : 'border-sky-200 text-slate-700 hover:border-cyan-300 dark:border-slate-700 dark:text-slate-200 dark:hover:border-cyan-700'
+                  }`}
+                >
+                  <span className="relative z-10 flex items-center justify-between gap-3">
+                    <span>{option.text}</span>
+                    {hasPollVoted && (
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        {option.votes} ({percentage}%)
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{poll.totalVotes} vote{poll.totalVotes === 1 ? '' : 's'}</p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>{getRelativeTime(new Date(post.createdAt))}</span>
@@ -425,12 +521,12 @@ export default function PostCard({ post, onVote }: PostCardProps) {
                   ref={textareaRef}
                   value={newComment}
                   onChange={(event) => setNewComment(event.target.value.slice(0, 300))}
-                  className="min-h-24 w-full resize-none rounded-2xl border border-sky-200 bg-white/80 p-4 pr-16 text-sm text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/35 dark:border-slate-700 dark:bg-slate-900/70 dark:text-white"
+                  className="min-h-24 w-full resize-none rounded-2xl border border-sky-200 bg-white/80 p-4 pr-4 text-sm text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/35 md:pr-16 dark:border-slate-700 dark:bg-slate-900/70 dark:text-white"
                   placeholder="Write a reply..."
                   disabled={isSubmittingComment}
                 />
 
-                <div className="absolute bottom-3 right-3">
+                <div className="absolute bottom-3 right-3 hidden md:block">
                   <motion.button
                     type="button"
                     onClick={() => setIsEmojiKitOpen((current) => !current)}

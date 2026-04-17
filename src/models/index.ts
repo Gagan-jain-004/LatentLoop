@@ -4,6 +4,15 @@ export interface IPost extends Document {
   content: string;
   imageUrl?: string;
   imagePublicId?: string;
+  poll?: {
+    question: string;
+    options: {
+      id: string;
+      text: string;
+      votes: number;
+    }[];
+    totalVotes: number;
+  };
   upvotes: number;
   downvotes: number;
   score: number;
@@ -17,7 +26,7 @@ const postSchema = new Schema<IPost>(
   {
     content: {
       type: String,
-      required: true,
+      default: '',
       maxlength: 500,
       trim: true,
     },
@@ -28,6 +37,37 @@ const postSchema = new Schema<IPost>(
     imagePublicId: {
       type: String,
       trim: true,
+    },
+    poll: {
+      question: {
+        type: String,
+        trim: true,
+        maxlength: 120,
+      },
+      options: [
+        {
+          id: {
+            type: String,
+            required: true,
+          },
+          text: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 80,
+          },
+          votes: {
+            type: Number,
+            default: 0,
+            min: 0,
+          },
+        },
+      ],
+      totalVotes: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
     upvotes: {
       type: Number,

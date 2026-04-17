@@ -7,6 +7,7 @@ import PostInput from './PostInput';
 
 interface HeaderProps {
   onFilterChange: (filter: string) => void;
+  activeFilter?: string;
   onPostCreated: (post: {
     _id: string;
     content: string;
@@ -21,7 +22,7 @@ interface HeaderProps {
   }) => void;
 }
 
-export default function Header({ onFilterChange, onPostCreated }: HeaderProps) {
+export default function Header({ onFilterChange, activeFilter, onPostCreated }: HeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function Header({ onFilterChange, onPostCreated }: HeaderProps) {
         </div>
 
         <PostInput onPostCreated={onPostCreated} compact />
-        <FilterTabs onFilterChange={onFilterChange} />
+        <FilterTabs onFilterChange={onFilterChange} activeFilter={activeFilter} />
       </div>
     </motion.header>
   );
