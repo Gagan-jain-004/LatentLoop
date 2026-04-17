@@ -176,8 +176,8 @@ export default function AdminPostsManager() {
               whileHover={{ x: 5 }}
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <p className="mb-2 text-slate-800 dark:text-slate-100">{post.content}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-2 whitespace-pre-wrap wrap-anywhere text-slate-800 dark:text-slate-100">{post.content}</p>
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <span>{getRelativeTime(new Date(post.createdAt))}</span>
                     <span>•</span>

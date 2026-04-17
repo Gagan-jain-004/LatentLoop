@@ -170,7 +170,7 @@ export default function PostCommentsModal({ postId, isOpen, onClose }: PostComme
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                           >
-                            <p className="whitespace-pre-wrap text-sm leading-6 text-gray-900 dark:text-gray-100">
+                            <p className="whitespace-pre-wrap wrap-anywhere text-sm leading-6 text-gray-900 dark:text-gray-100">
                               {comment.content}
                             </p>
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
