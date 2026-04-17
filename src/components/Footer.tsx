@@ -8,6 +8,10 @@ interface FooterProps {
 }
 
 export default function Footer({ onFeedbackClick }: FooterProps) {
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <motion.footer
       className="mt-12 border-t border-sky-200/45 bg-transparent py-10 dark:border-slate-700/60"
@@ -16,6 +20,21 @@ export default function Footer({ onFeedbackClick }: FooterProps) {
       viewport={{ once: true }}
     >
       <div className="mx-auto max-w-5xl px-4">
+        <div className="mb-4 flex justify-end">
+          <motion.button
+            type="button"
+            onClick={handleScrollToTop}
+            className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-4 py-2 text-sm font-semibold text-cyan-800 shadow-sm transition-all hover:border-cyan-300 hover:bg-cyan-50 dark:border-cyan-900/70 dark:bg-slate-900/80 dark:text-cyan-200 dark:hover:bg-slate-800"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            <span aria-hidden="true">↑</span>
+            <span>Top</span>
+          </motion.button>
+        </div>
+
         <div className="grid grid-cols-1 gap-8 py-2 md:grid-cols-3">
           <div>
             <h3 className="mb-3 text-lg font-black text-slate-900 dark:text-white">RTU Got Latent</h3>
