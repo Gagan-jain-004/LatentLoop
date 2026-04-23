@@ -1,11 +1,8 @@
 export function sanitizeInput(input: string, maxLength: number = 500): string {
   return input
+    .replace(/\u0000/g, '')
+    .replace(/\r\n?/g, '\n')
     .trim()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
     .slice(0, maxLength);
 }
 
